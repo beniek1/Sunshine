@@ -4,6 +4,8 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -21,6 +23,9 @@ import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity {
 
+    /**
+     * Temporarliy hardcoded string for OpenWeatherAPI connection.
+     */
     public static final String MY_URL = "http://api.openweathermap.org/data/2.5/forecast/daily?lat=51" +
             ".05&lon=17.06&mode=json&cnt=7&units=metric&APPID=e7b0e7d19a155ba13278c7ee01eb7e43";
 
@@ -45,6 +50,25 @@ public class MainActivity extends AppCompatActivity {
                 this, R.layout.list_item_forecast, R.id.list_item_forecast_textview, exampleDailyForecasts);
         forecastDisplay.setAdapter(forecastAdapter);
 
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_refresh) {
+            Toast.makeText(this, "Kliknięto w opcję w menu", Toast.LENGTH_SHORT).show();
+            callFetchWeatherTask();
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void callFetchWeatherTask() {
         String response = "";
         Toast.makeText(this, "STARTING WORK!", Toast.LENGTH_SHORT).show();
 
@@ -57,8 +81,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         Toast.makeText(this, response, Toast.LENGTH_LONG).show();
-
-
     }
 }
 
@@ -67,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
  */
 class FetchWeatherTask extends AsyncTask<String, Void, String> {
 
-    public static final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
+    private static final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
 
     @Override
     protected String doInBackground(String... params) {
@@ -104,7 +126,7 @@ class FetchWeatherTask extends AsyncTask<String, Void, String> {
                 // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
                 // But it does make debugging a *lot* easier if you print out the completed
                 // buffer for debugging.
-                buffer.append(line + "\n");
+                buffer.append(line).append("\n");
             }
 
             if (buffer.length() == 0) {
