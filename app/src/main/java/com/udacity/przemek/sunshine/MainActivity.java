@@ -1,7 +1,9 @@
 package com.udacity.przemek.sunshine;
 
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -15,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,11 +26,7 @@ import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity {
 
-    /**
-     * Temporarliy hardcoded string for OpenWeatherAPI connection.
-     */
-    public static final String MY_URL = "http://api.openweathermap.org/data/2.5/forecast/daily?lat=51" +
-            ".05&lon=17.06&mode=json&cnt=7&units=metric&APPID=e7b0e7d19a155ba13278c7ee01eb7e43";
+    public static final String TEMP_HARDCODED_ZIP = "52-129";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(this, "STARTING WORK!", Toast.LENGTH_SHORT).show();
 
         try {
-            response = new FetchWeatherTask().execute(MY_URL).get();
+            response = new FetchWeatherTask().execute(TEMP_HARDCODED_ZIP).get();
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {
@@ -85,11 +84,22 @@ public class MainActivity extends AppCompatActivity {
 }
 
 /**
- * Used for retrieving weather information from specified URL (OpenWeatherAPI)
+ * Used for retrieving weather information from specified City Name.
  */
 class FetchWeatherTask extends AsyncTask<String, Void, String> {
 
+
+    /**
+     * Temporarliy hardcoded string for OpenWeatherAPI connection.
+     */
+    //TODO: Replace with URI
+    public static final String MY_URL = "http://api.openweathermap.org/data/2.5/forecast/daily?lat=51" +
+            ".05&lon=17.06&mode=json&cnt=7&units=metric&APPID=e7b0e7d19a155ba13278c7ee01eb7e43";
     private static final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
+    private static final String COUNTRY_CODE = "pl";
+    private static final String DAYS = "7";
+    private static final String UNITS = "metric";
+    private static final String WEATHER_APP_ID = "e7b0e7d19a155ba13278c7ee01eb7e43";
 
     @Override
     protected String doInBackground(String... params) {
@@ -105,7 +115,7 @@ class FetchWeatherTask extends AsyncTask<String, Void, String> {
             // Construct the URL for the OpenWeatherMap query
             // Possible parameters are available at OWM's forecast API page, at
             // http://openweathermap.org/API#forecast
-            URL url = new URL(params[0]);
+            URL url = generateURL(params[0]);
 
             // Create the request to OpenWeatherMap, and open the connection
             urlConnection = (HttpURLConnection) url.openConnection();
@@ -134,6 +144,7 @@ class FetchWeatherTask extends AsyncTask<String, Void, String> {
                 forecastJsonStr = null;
             }
             forecastJsonStr = buffer.toString();
+            Log.v(LOG_TAG, forecastJsonStr);
         } catch (IOException e) {
             Log.e(LOG_TAG, "Error ", e);
             // If the code didn't successfully get the weather data, there's no point in attempting
@@ -153,5 +164,27 @@ class FetchWeatherTask extends AsyncTask<String, Void, String> {
         }
         return forecastJsonStr;
 
+    }
+
+    @NonNull
+    private URL generateURL(String zipCode) throws MalformedURLException {
+        Uri.Builder uriBuilder = new Uri.Builder();
+        uriBuilder.scheme("http")
+                .authority("api.openweathermap.org")
+                .appendPath("data")
+                .appendPath("2.5")
+                .appendPath("forecast")
+                .appendPath("daily")
+                .appendQueryParameter("zip", zipCode + "," + COUNTRY_CODE)
+                .appendQueryParameter("mode", "json")
+                .appendQueryParameter("cnt", DAYS)
+                .appendQueryParameter("units", UNITS)
+                .appendQueryParameter("APPID", WEATHER_APP_ID);
+
+
+        //TODO: Do some manipulation, add zipcode ETC
+        String url = uriBuilder.build().toString();
+        Log.v(LOG_TAG, url);
+        return new URL(url);
     }
 }
