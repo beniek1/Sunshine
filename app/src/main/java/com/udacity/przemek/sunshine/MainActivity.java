@@ -3,7 +3,6 @@ package com.udacity.przemek.sunshine;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -27,6 +26,9 @@ import java.util.concurrent.ExecutionException;
 public class MainActivity extends AppCompatActivity {
 
     public static final String TEMP_HARDCODED_ZIP = "52-129";
+    public static final String DAYS_PARAM = "7";
+    public static final int DAYS = Integer.parseInt(DAYS_PARAM);
+    private ListView forecastDisplay;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,11 +46,20 @@ public class MainActivity extends AppCompatActivity {
         };
         List<String> exampleDailyForecasts = new ArrayList<>(Arrays.asList(arr));
 
-        ListView forecastDisplay = (ListView) this.findViewById(R.id.listview_forecast);
-        ArrayAdapter<String> forecastAdapter = new ArrayAdapter<String>(
+        forecastDisplay = (ListView) this.findViewById(R.id.listview_forecast);
+        updateDisplayList(exampleDailyForecasts);
+
+    }
+
+    /**
+     * Updates UI with given list of formatted strings with responses.
+     *
+     * @param exampleDailyForecasts
+     */
+    private void updateDisplayList(List<String> exampleDailyForecasts) {
+        ArrayAdapter<String> forecastAdapter = new ArrayAdapter<>(
                 this, R.layout.list_item_forecast, R.id.list_item_forecast_textview, exampleDailyForecasts);
         forecastDisplay.setAdapter(forecastAdapter);
-
     }
 
 
@@ -67,19 +78,26 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    /**
+     * Retrieves data using Async Task in the background, and updates UI.
+     */
     private void callFetchWeatherTask() {
         String response = "";
         Toast.makeText(this, "STARTING WORK!", Toast.LENGTH_SHORT).show();
 
         try {
             response = new FetchWeatherTask().execute(TEMP_HARDCODED_ZIP).get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
+        } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
 
-        Toast.makeText(this, response, Toast.LENGTH_LONG).show();
+        try {
+            String[] weatherForecasts = WeatherJsonParser.getWeatherDataFromJson(response, DAYS);
+            updateDisplayList(Arrays.asList(weatherForecasts));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
 
@@ -88,16 +106,8 @@ public class MainActivity extends AppCompatActivity {
  */
 class FetchWeatherTask extends AsyncTask<String, Void, String> {
 
-
-    /**
-     * Temporarliy hardcoded string for OpenWeatherAPI connection.
-     */
-    //TODO: Replace with URI
-    public static final String MY_URL = "http://api.openweathermap.org/data/2.5/forecast/daily?lat=51" +
-            ".05&lon=17.06&mode=json&cnt=7&units=metric&APPID=e7b0e7d19a155ba13278c7ee01eb7e43";
     private static final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
     private static final String COUNTRY_CODE = "pl";
-    private static final String DAYS = "7";
     private static final String UNITS = "metric";
     private static final String WEATHER_APP_ID = "e7b0e7d19a155ba13278c7ee01eb7e43";
 
@@ -166,7 +176,13 @@ class FetchWeatherTask extends AsyncTask<String, Void, String> {
 
     }
 
-    @NonNull
+    /**
+     * Creates URL with query for OpenWeatherAPI with pre-set params and received zipcode.
+     *
+     * @param zipCode
+     * @return
+     * @throws MalformedURLException
+     */
     private URL generateURL(String zipCode) throws MalformedURLException {
         Uri.Builder uriBuilder = new Uri.Builder();
         uriBuilder.scheme("http")
@@ -177,12 +193,10 @@ class FetchWeatherTask extends AsyncTask<String, Void, String> {
                 .appendPath("daily")
                 .appendQueryParameter("zip", zipCode + "," + COUNTRY_CODE)
                 .appendQueryParameter("mode", "json")
-                .appendQueryParameter("cnt", DAYS)
+                .appendQueryParameter("cnt", MainActivity.DAYS_PARAM)
                 .appendQueryParameter("units", UNITS)
                 .appendQueryParameter("APPID", WEATHER_APP_ID);
 
-
-        //TODO: Do some manipulation, add zipcode ETC
         String url = uriBuilder.build().toString();
         Log.v(LOG_TAG, url);
         return new URL(url);
