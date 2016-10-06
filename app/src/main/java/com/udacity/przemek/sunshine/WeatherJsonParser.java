@@ -4,10 +4,8 @@ import android.text.format.Time;
 import android.util.Log;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 
 /**
@@ -17,19 +15,19 @@ import java.text.SimpleDateFormat;
 public class WeatherJsonParser {
 
     /**
-     * Constants for parsing Open Weather API JSON responses.
+     * Open Weather Map API constants.
      */
-    public static final String LIST = "list";
-    public static final String TEMP = "temp";
-    public static final String MIN = "min";
-    public static final String MAX = "max";
-    public static final String WEATHER = "weather";
-    public static final String DESC = "description";
+    public static final String OWM_LIST = "list";
+    public static final String OWM_WEATHER = "weather";
+    public static final String OWM_TEMPERATURE = "temp";
+    public static final String OWM_MAX = "max";
+    public static final String OWM_MIN = "min";
+    public static final String OWM_DESCRIPTION = "main";
 
     /**
      * Class name tag for logging.
      */
-    private static final String Log_TAG = WeatherJsonParser.class.getSimpleName();
+    private static final String LOG_TAG = WeatherJsonParser.class.getSimpleName();
 
 
     public static String[] getWeatherDataFromJson(String forecastJsonStr, int numDays)
@@ -37,125 +35,71 @@ public class WeatherJsonParser {
 
         if (forecastJsonStr == null) {
             String msg = "Empty JSON string received!";
-            Log.e(Log_TAG, msg);
+            Log.e(LOG_TAG, msg);
             throw new Exception(msg);
         }
 
-        //Initialize result array.
-        String[] result = new String[numDays];
+        // These are the names of the JSON objects that need to be extracted.
 
-        for (int i = 0; i < numDays; i++) {
-            String row = generateResponseRowFromJson(forecastJsonStr, i);
-            result[i] = row;
-            Log.v(Log_TAG, "Forecast entry: " + row);
-        }
-
-        return result;
-
-
-    }
-
-    /**
-     * Creates formated row of weather data for display
-     *
-     * @param forecastJsonStr
-     * @param dayNum          day numer
-     * @return Row of weather data for single day.
-     * @throws JSONException
-     */
-    private static String generateResponseRowFromJson(String forecastJsonStr, int dayNum)
-            throws JSONException {
-        return MessageFormat.format("{0} -  {1} {2} / {3}",
-                getReadableDateStr(forecastJsonStr, dayNum),
-                getWeatherDesc(forecastJsonStr, dayNum),
-                getMaximumTemp(forecastJsonStr, dayNum),
-                getMinimumTemp(forecastJsonStr, dayNum));
-    }
-
-    private static String getReadableDateStr(String forecastJsonStr, int dayNum)
-            throws JSONException {
-        JSONObject day = getSingleDay(forecastJsonStr, dayNum);
-        long time = day.getLong("dt");
-        return convertToHumanlyReadableTime(time, dayNum);
-    }
-
-    private static String convertToHumanlyReadableTime(long time, int dayNum) {
-
+        JSONObject forecastJson = new JSONObject(forecastJsonStr);
+        JSONArray weatherArray = forecastJson.getJSONArray(OWM_LIST);
+        // OWM returns daily forecasts based upon the local time of the city that is being
+        // asked for, which means that we need to know the GMT offset to translate this data
+        // properly.
         // Since this data is also sent in-order and the first day is always the
         // current day, we're going to take advantage of that to get a nice
         // normalized UTC date for all of our weather.
         Time dayTime = new Time();
         dayTime.setToNow();
-
         // we start at the day returned by local time. Otherwise this is a mess.
         int julianStartDay = Time.getJulianDay(System.currentTimeMillis(), dayTime.gmtoff);
-
         // now we work exclusively in UTC
         dayTime = new Time();
+        String[] resultStrs = new String[numDays];
+        for (int i = 0; i < weatherArray.length(); i++) {
+            // For now, using the format "Day, description, hi/low"
+            String day;
+            String description;
+            String highAndLow;
+            // Get the JSON object representing the day
+            JSONObject dayForecast = weatherArray.getJSONObject(i);
+            // The date/time is returned as a long.  We need to convert that
+            // into something human-readable, since most people won't read "1400356800" as
+            // "this saturday".
+            long dateTime;
+            // Cheating to convert this to UTC time, which is what we want anyhow
+            dateTime = dayTime.setJulianDay(julianStartDay + i);
+            day = getReadableDateString(dateTime);
+            // description is in a child array called "weather", which is 1 element long.
+            JSONObject weatherObject = dayForecast.getJSONArray(OWM_WEATHER).getJSONObject(0);
+            description = weatherObject.getString(OWM_DESCRIPTION);
+            // Temperatures are in a child object called "temp".  Try not to name variables
+            // "temp" when working with temperature.  It confuses everybody.
+            JSONObject temperatureObject = dayForecast.getJSONObject(OWM_TEMPERATURE);
+            double high = temperatureObject.getDouble(OWM_MAX);
+            double low = temperatureObject.getDouble(OWM_MIN);
+            highAndLow = formatHighLows(high, low);
+            resultStrs[i] = day + " - " + description + " - " + highAndLow;
+        }
+        return resultStrs;
+    }
 
-        // Cheating to convert this to UTC time, which is what we want anyhow
-        long dateTime = dayTime.setJulianDay(julianStartDay + dayNum);
+    /* The date/time conversion code is going to be moved outside the asynctask later,
+     * so for convenience we're breaking it out into its own method now.
+     */
+    private static String getReadableDateString(long time) {
         SimpleDateFormat shortenedDateFormat = new SimpleDateFormat("EEE MMM dd");
-        return shortenedDateFormat.format(dateTime);
+        return shortenedDateFormat.format(time);
     }
-
 
     /**
-     * Gets minimum temperature for given day.
-     *
-     * @param json
-     * @param dayIndex starting with 0.
-     * @return Temperature
-     * @throws JSONException
+     * Prepare the weather high/lows for presentation.
      */
-    private static long getMaximumTemp(String json, int dayIndex)
-            throws JSONException {
-        JSONObject tempInfo = getTempJsonObj(json, dayIndex);
-        return Math.round(tempInfo.getDouble(MAX));
-    }
-
-
-    /**
-     * Gets Maximum temperature for given day.
-     *
-     * @param json
-     * @param dayIndex starting with 0.
-     * @return Temperature
-     * @throws JSONException
-     */
-    private static long getMinimumTemp(String json, int dayIndex)
-            throws JSONException {
-        JSONObject tempInfo = getTempJsonObj(json, dayIndex);
-        return Math.round(tempInfo.getDouble(MIN));
-    }
-
-
-    private static JSONObject getTempJsonObj(String json, int dayIndex)
-            throws JSONException {
-        JSONObject selectedDay = getSingleDay(json, dayIndex);
-        return selectedDay.getJSONObject(TEMP);
-    }
-
-    private static JSONObject getSingleDay(String json, int dayIndex) throws JSONException {
-        JSONObject jsonObject = new JSONObject(json);
-        JSONArray days = jsonObject.getJSONArray(LIST);
-        return days.getJSONObject(dayIndex);
-    }
-
-
-    /**
-     * Parses string with descripcion of weather on day with given index.
-     *
-     * @param json
-     * @param dayIndex
-     * @return
-     * @throws JSONException
-     */
-    private static String getWeatherDesc(String json, int dayIndex)
-            throws JSONException {
-        JSONObject selectedDay = getSingleDay(json, dayIndex);
-        JSONArray weather = selectedDay.getJSONArray(WEATHER);
-        return weather.getJSONObject(0).getString(DESC);
+    private static String formatHighLows(double high, double low) {
+        long roundedHigh = Math.round(high);
+        long roundedLow = Math.round(low);
+        String highLowStr = roundedHigh + "/" + roundedLow;
+        return highLowStr;
     }
 
 

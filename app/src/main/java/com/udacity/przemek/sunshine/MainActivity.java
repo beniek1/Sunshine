@@ -21,45 +21,44 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity {
 
     public static final String TEMP_HARDCODED_ZIP = "52-129";
     public static final String DAYS_PARAM = "7";
     public static final int DAYS = Integer.parseInt(DAYS_PARAM);
-    private ListView forecastDisplay;
+    public ArrayAdapter<String> forecastAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //TODO: Replace example with real impl.
-        String[] arr = {
-                "Today - Rainy - 15/10",
-                "Tomorrow - Cloudy - 12/9",
-                "Wed - Rainy - 17/11",
-                "Thur - Clody - 11/10",
-                "Fri - Dudu - 19/99",
-                "Sat - Dudu - 19/99"
+        String[] data = {
+                "Mon 6/23 - Sunny - 31/17",
+                "Tue 6/24 - Foggy - 21/8",
+                "Wed 6/25 - Cloudy - 22/17",
+                "Thurs 6/26 - Rainy - 18/11",
+                "Fri 6/27 - Foggy - 21/10",
+                "Sat 6/28 - TRAPPED IN WEATHERSTATION - 23/18",
+                "Sun 6/29 - Sunny - 20/7"
         };
-        List<String> exampleDailyForecasts = new ArrayList<>(Arrays.asList(arr));
+        List<String> weekForecast = new ArrayList<String>(Arrays.asList(data));
 
-        forecastDisplay = (ListView) this.findViewById(R.id.listview_forecast);
-        updateDisplayList(exampleDailyForecasts);
+        // Now that we have some dummy forecast data, create an ArrayAdapter.
+        // The ArrayAdapter will take data from a source (like our dummy forecast) and
+        // use it to populate the ListView it's attached to.
+        forecastAdapter =
+                new ArrayAdapter<String>(
+                        this, // The current context (this activity)
+                        R.layout.list_item_forecast, // The name of the layout ID.
+                        R.id.list_item_forecast_textview, // The ID of the textview to populate.
+                        weekForecast);
 
-    }
+        // Get a reference to the ListView, and attach this adapter to it.
+        ListView listView = (ListView) findViewById(R.id.listview_forecast);
+        listView.setAdapter(forecastAdapter);
 
-    /**
-     * Updates UI with given list of formatted strings with responses.
-     *
-     * @param exampleDailyForecasts
-     */
-    private void updateDisplayList(List<String> exampleDailyForecasts) {
-        ArrayAdapter<String> forecastAdapter = new ArrayAdapter<>(
-                this, R.layout.list_item_forecast, R.id.list_item_forecast_textview, exampleDailyForecasts);
-        forecastDisplay.setAdapter(forecastAdapter);
     }
 
 
@@ -72,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_refresh) {
-            Toast.makeText(this, "Kliknięto w opcję w menu", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Refresh called!", Toast.LENGTH_SHORT).show();
             callFetchWeatherTask();
         }
         return super.onOptionsItemSelected(item);
@@ -82,123 +81,126 @@ public class MainActivity extends AppCompatActivity {
      * Retrieves data using Async Task in the background, and updates UI.
      */
     private void callFetchWeatherTask() {
-        String response = "";
         Toast.makeText(this, "STARTING WORK!", Toast.LENGTH_SHORT).show();
-
-        try {
-            response = new FetchWeatherTask().execute(TEMP_HARDCODED_ZIP).get();
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
-
-        try {
-            String[] weatherForecasts = WeatherJsonParser.getWeatherDataFromJson(response, DAYS);
-            updateDisplayList(Arrays.asList(weatherForecasts));
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-}
-
-/**
- * Used for retrieving weather information from specified City Name.
- */
-class FetchWeatherTask extends AsyncTask<String, Void, String> {
-
-    private static final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
-    private static final String COUNTRY_CODE = "pl";
-    private static final String UNITS = "metric";
-    private static final String WEATHER_APP_ID = "e7b0e7d19a155ba13278c7ee01eb7e43";
-
-    @Override
-    protected String doInBackground(String... params) {
-        // These two need to be declared outside the try/catch
-        // so that they can be closed in the finally block.
-        HttpURLConnection urlConnection = null;
-        BufferedReader reader = null;
-
-        // Will contain the raw JSON response as a string.
-        String forecastJsonStr = null;
-
-        try {
-            // Construct the URL for the OpenWeatherMap query
-            // Possible parameters are available at OWM's forecast API page, at
-            // http://openweathermap.org/API#forecast
-            URL url = generateURL(params[0]);
-
-            // Create the request to OpenWeatherMap, and open the connection
-            urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.setRequestMethod("GET");
-            urlConnection.connect();
-
-            // Read the input stream into a String
-            InputStream inputStream = urlConnection.getInputStream();
-            StringBuffer buffer = new StringBuffer();
-            if (inputStream == null) {
-                // Nothing to do.
-                forecastJsonStr = null;
-            }
-            reader = new BufferedReader(new InputStreamReader(inputStream));
-
-            String line;
-            while ((line = reader.readLine()) != null) {
-                // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
-                // But it does make debugging a *lot* easier if you print out the completed
-                // buffer for debugging.
-                buffer.append(line).append("\n");
-            }
-
-            if (buffer.length() == 0) {
-                // Stream was empty.  No point in parsing.
-                forecastJsonStr = null;
-            }
-            forecastJsonStr = buffer.toString();
-            Log.v(LOG_TAG, forecastJsonStr);
-        } catch (IOException e) {
-            Log.e(LOG_TAG, "Error ", e);
-            // If the code didn't successfully get the weather data, there's no point in attempting
-            // to parse it.
-            forecastJsonStr = null;
-        } finally {
-            if (urlConnection != null) {
-                urlConnection.disconnect();
-            }
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (final IOException e) {
-                    Log.e("PlaceholderFragment", "Error closing stream", e);
-                }
-            }
-        }
-        return forecastJsonStr;
+        new FetchWeatherTask().execute(TEMP_HARDCODED_ZIP);
 
     }
+
 
     /**
-     * Creates URL with query for OpenWeatherAPI with pre-set params and received zipcode.
-     *
-     * @param zipCode
-     * @return
-     * @throws MalformedURLException
+     * Used for retrieving weather information from specified City Name.
      */
-    private URL generateURL(String zipCode) throws MalformedURLException {
-        Uri.Builder uriBuilder = new Uri.Builder();
-        uriBuilder.scheme("http")
-                .authority("api.openweathermap.org")
-                .appendPath("data")
-                .appendPath("2.5")
-                .appendPath("forecast")
-                .appendPath("daily")
-                .appendQueryParameter("zip", zipCode + "," + COUNTRY_CODE)
-                .appendQueryParameter("mode", "json")
-                .appendQueryParameter("cnt", MainActivity.DAYS_PARAM)
-                .appendQueryParameter("units", UNITS)
-                .appendQueryParameter("APPID", WEATHER_APP_ID);
+    class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
 
-        String url = uriBuilder.build().toString();
-        Log.v(LOG_TAG, url);
-        return new URL(url);
+        private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
+        private final String COUNTRY_CODE = "pl";
+        private final String UNITS = "metric";
+        private final String WEATHER_APP_ID = "e7b0e7d19a155ba13278c7ee01eb7e43";
+
+        @Override
+        protected String[] doInBackground(String... params) {
+            // These two need to be declared outside the try/catch
+            // so that they can be closed in the finally block.
+            HttpURLConnection urlConnection = null;
+            BufferedReader reader = null;
+
+            // Will contain the raw JSON response as a string.
+            String forecastJsonStr = null;
+
+            try {
+                // Construct the URL for the OpenWeatherMap query
+                // Possible parameters are available at OWM's forecast API page, at
+                // http://openweathermap.org/API#forecast
+                URL url = generateURL(params[0]);
+
+                // Create the request to OpenWeatherMap, and open the connection
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setRequestMethod("GET");
+                urlConnection.connect();
+
+                // Read the input stream into a String
+                InputStream inputStream = urlConnection.getInputStream();
+                StringBuffer buffer = new StringBuffer();
+                if (inputStream == null) {
+                    // Nothing to do.
+                    forecastJsonStr = null;
+                }
+                reader = new BufferedReader(new InputStreamReader(inputStream));
+
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
+                    // But it does make debugging a *lot* easier if you print out the completed
+                    // buffer for debugging.
+                    buffer.append(line).append("\n");
+                }
+
+                if (buffer.length() == 0) {
+                    // Stream was empty.  No point in parsing.
+                    forecastJsonStr = null;
+                }
+                forecastJsonStr = buffer.toString();
+            } catch (IOException e) {
+                Log.e(LOG_TAG, "Error ", e);
+                // If the code didn't successfully get the weather data, there's no point in attempting
+                // to parse it.
+                forecastJsonStr = null;
+            } finally {
+                if (urlConnection != null) {
+                    urlConnection.disconnect();
+                }
+                if (reader != null) {
+                    try {
+                        reader.close();
+                    } catch (final IOException e) {
+                        Log.e("PlaceholderFragment", "Error closing stream", e);
+                    }
+                }
+            }
+
+            try {
+                return WeatherJsonParser.getWeatherDataFromJson(forecastJsonStr, DAYS);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            return null;
+
+        }
+
+        /**
+         * Creates URL with query for OpenWeatherAPI with pre-set params and received zipcode.
+         *
+         * @param zipCode
+         * @return
+         * @throws MalformedURLException
+         */
+        private URL generateURL(String zipCode) throws MalformedURLException {
+            Uri.Builder uriBuilder = new Uri.Builder();
+            uriBuilder.scheme("http")
+                    .authority("api.openweathermap.org")
+                    .appendPath("data")
+                    .appendPath("2.5")
+                    .appendPath("forecast")
+                    .appendPath("daily")
+                    .appendQueryParameter("zip", zipCode + "," + COUNTRY_CODE)
+                    .appendQueryParameter("mode", "json")
+                    .appendQueryParameter("cnt", MainActivity.DAYS_PARAM)
+                    .appendQueryParameter("units", UNITS)
+                    .appendQueryParameter("APPID", WEATHER_APP_ID);
+
+            String url = uriBuilder.build().toString();
+            return new URL(url);
+        }
+
+        @Override
+        protected void onPostExecute(String[] result) {
+            if (result != null) {
+                forecastAdapter.clear();
+                forecastAdapter.addAll(result);
+            }
+        }
     }
 }
+
+
