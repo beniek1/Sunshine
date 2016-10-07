@@ -1,9 +1,11 @@
 package com.udacity.przemek.sunshine;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -27,7 +29,7 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static final String TEMP_HARDCODED_ZIP = "52-129";
+    public static final String DEFAULT_ZIP_CODE = "52-129";
     public static final String DAYS_PARAM = "7";
     public static final int DAYS = Integer.parseInt(DAYS_PARAM);
     public ArrayAdapter<String> forecastAdapter;
@@ -90,8 +92,18 @@ public class MainActivity extends AppCompatActivity {
      */
     private void callFetchWeatherTask() {
         Toast.makeText(this, "STARTING WORK!", Toast.LENGTH_SHORT).show();
-        new FetchWeatherTask().execute(TEMP_HARDCODED_ZIP);
+        String zipCode = getZipCodeFromPreferences();
+        new FetchWeatherTask().execute(getZipCodeFromPreferences());
 
+    }
+
+    /**
+     * Retrieves zip code saved in preferences.
+     */
+    private String getZipCodeFromPreferences() {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        return sharedPreferences.getString(getString(R.string.zip_preference_key),
+                DEFAULT_ZIP_CODE);
     }
 
 

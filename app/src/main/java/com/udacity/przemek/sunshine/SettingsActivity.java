@@ -1,5 +1,6 @@
 package com.udacity.przemek.sunshine;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
@@ -46,19 +47,25 @@ public class SettingsActivity extends PreferenceActivity
 
     @Override
     public boolean onPreferenceChange(Preference preference, Object value) {
-        String stringValue = value.toString();
+        String preferenceValue = value.toString();
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(
+                preference.getContext());
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(preference.getKey(), preferenceValue);
+        editor.apply();
 
         if (preference instanceof ListPreference) {
             // For list preferences, look up the correct display value in
             // the preference's 'entries' list (since they have separate labels/values).
             ListPreference listPreference = (ListPreference) preference;
-            int prefIndex = listPreference.findIndexOfValue(stringValue);
+            int prefIndex = listPreference.findIndexOfValue(preferenceValue);
             if (prefIndex >= 0) {
                 preference.setSummary(listPreference.getEntries()[prefIndex]);
             }
         } else {
             // For other preferences, set the summary to the value's simple string representation.
-            preference.setSummary(stringValue);
+            preference.setSummary(preferenceValue);
         }
         return true;
     }
