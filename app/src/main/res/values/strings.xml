@@ -1,6 +1,13 @@
 <resources>
-    <string name="app_name">Sunshine</string>
-    <string name="refresh" translatable="false">Refresh</string>
-    <string name="title_activity_day_detail">DayDetail</string>
-    <string name="settings">Settings</string>
+    <string name="app_name" translatable="false">Sunshine</string>
+    <!--Refresh menu string-->
+    <string name="refresh">Refresh</string>
+    <string name="title_activity_day_detail" translatable="true">DayDetail</string>
+    <string name="settings" translatable="true">Settings</string>
+    <!--Default zip code-->
+    <string name="default_zip" translatable="false">52-129</string>
+
+    <string name="zip_code" translatable="true">Zip Code</string>
+
+    <string name="zip_preference_key" translatable="false">zip_code</string>
 </resources>

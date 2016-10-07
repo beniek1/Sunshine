@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="pref_sync"
+        android:summary="Summary"
+        android:title="Checkbox"/>
+
+    <EditTextPreference
+        android:defaultValue="@string/default_zip"
+        android:inputType="text"
+        android:key="@string/zip_preference_key"
+        android:singleLine="true"
+        android:title="@string/zip_code"/>
+
+</PreferenceScreen>
