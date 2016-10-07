@@ -32,6 +32,12 @@ public class MainActivity extends AppCompatActivity {
     public ArrayAdapter<String> forecastAdapter;
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        callFetchWeatherTask();
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -44,9 +50,6 @@ public class MainActivity extends AppCompatActivity {
 
         ListView listView = (ListView) findViewById(R.id.listview_forecast);
         listView.setAdapter(forecastAdapter);
-
-        callFetchWeatherTask();
-
         listView.setOnItemClickListener(new ListViewOnItemClickListener());
 
     }
