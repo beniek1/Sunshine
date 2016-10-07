@@ -49,8 +49,11 @@ public class MainActivity extends AppCompatActivity {
 
         ListView listView = (ListView) findViewById(R.id.listview_forecast);
         listView.setAdapter(forecastAdapter);
-        //Initial update.
-        callFetchWeatherTask();
+        //Initial data retrival.
+        if (forecastAdapter.getCount() == 1) {
+            callFetchWeatherTask();
+        }
+
         listView.setOnItemClickListener(new ListViewOnItemClickListener());
 
     }
@@ -69,6 +72,7 @@ public class MainActivity extends AppCompatActivity {
             callFetchWeatherTask();
         } else if (item.getItemId() == R.id.settings) {
             startSettingActivity();
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }
