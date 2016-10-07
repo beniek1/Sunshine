@@ -30,7 +30,8 @@ public class WeatherJsonParser {
     private static final String LOG_TAG = WeatherJsonParser.class.getSimpleName();
 
 
-    public static String[] getWeatherDataFromJson(String forecastJsonStr, int numDays)
+    public static String[] getWeatherDataFromJson(String forecastJsonStr, int numDays,
+                                                  boolean useMetricUnits)
             throws Exception {
 
         if (forecastJsonStr == null) {
@@ -83,9 +84,25 @@ public class WeatherJsonParser {
             double high = temperatureObject.getDouble(OWM_MAX);
             double low = temperatureObject.getDouble(OWM_MIN);
 
+            //Convert units to Imperial if needed
+            if (!useMetricUnits) {
+                high = convertToImperial(high);
+                low = convertToImperial(low);
+            }
+
             resultStrs[i] = day + " - " + description + " - " + formattedTemperatures(high, low);
         }
         return resultStrs;
+    }
+
+    /**
+     * Converts given metric temperature (C) to imperial (F)
+     *
+     * @param temp
+     * @return Converted temperature
+     */
+    private static double convertToImperial(double temp) {
+        return (temp * 1.8) + 32;
     }
 
     /**

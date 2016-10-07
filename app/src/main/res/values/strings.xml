@@ -10,4 +10,19 @@
     <string name="zip_code" translatable="true">Zip Code</string>
 
     <string name="zip_preference_key" translatable="false">zip_code</string>
+    <string name="units">Units</string>
+    <string name="unit_key">unit_key</string>
+    <string name="metric">Metric</string>
+    <string name="show_location">Show location</string>
+
+    <!--Array for preference screen with units-->
+    <string-array name="units">
+        <item>Metric</item>
+        <item>Imperial</item>
+    </string-array>
+
+    <string-array name="units_values">
+        <item>1</item>
+        <item>2</item>
+    </string-array>
 </resources>

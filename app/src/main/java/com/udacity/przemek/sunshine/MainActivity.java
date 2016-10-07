@@ -14,7 +14,6 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -64,7 +63,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_refresh) {
-            Toast.makeText(this, "Refresh called!", Toast.LENGTH_SHORT).show();
             callFetchWeatherTask();
         } else if (item.getItemId() == R.id.settings) {
             startSettingActivity();
@@ -96,6 +94,36 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         return sharedPreferences.getString(getString(R.string.zip_preference_key),
                 DEFAULT_ZIP_CODE);
+    }
+
+    /**
+     * Returns true if user set units to Metric in preferences. Returns false for Imperial units.
+     */
+    private boolean useMetricUnits() {
+        String pref = PreferenceManager.getDefaultSharedPreferences(MainActivity.this).getString(getString
+                (R.string
+                        .unit_key), getString(R.string.metric));
+        if (pref.equals("1")) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Handles click on single day row.
+     */
+    private class ListViewOnItemClickListener implements AdapterView.OnItemClickListener {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+            String weather = forecastAdapter.getItem(position);
+
+            Intent launchDetailActivity = new Intent(MainActivity.this, DetailsActivity.class);
+            launchDetailActivity.putExtra(DetailsActivity.WEATHER_INFO, weather);
+            startActivity(launchDetailActivity);
+
+        }
     }
 
 
@@ -165,13 +193,14 @@ public class MainActivity extends AppCompatActivity {
                     try {
                         reader.close();
                     } catch (final IOException e) {
-                        Log.e("PlaceholderFragment", "Error closing stream", e);
+                        Log.e(MainActivity.class.getSimpleName(), "Error closing stream", e);
                     }
                 }
             }
 
             try {
-                return WeatherJsonParser.getWeatherDataFromJson(forecastJsonStr, DAYS);
+                boolean useMetricUnits = useMetricUnits();
+                return WeatherJsonParser.getWeatherDataFromJson(forecastJsonStr, DAYS, useMetricUnits);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -214,21 +243,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Handles click on single day row.
-     */
-    private class ListViewOnItemClickListener implements AdapterView.OnItemClickListener {
-        @Override
-        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-            String weather = forecastAdapter.getItem(position);
-
-            Intent launchDetailActivity = new Intent(MainActivity.this, DetailsActivity.class);
-            launchDetailActivity.putExtra(DetailsActivity.WEATHER_INFO, weather);
-            startActivity(launchDetailActivity);
-
-        }
-    }
 }
 
 

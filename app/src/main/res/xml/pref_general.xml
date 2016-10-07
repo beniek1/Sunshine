@@ -1,17 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <CheckBoxPreference
-        android:defaultValue="true"
-        android:key="pref_sync"
-        android:summary="Summary"
-        android:title="Checkbox"/>
-
+    <!--Zip Code chooser-->
     <EditTextPreference
         android:defaultValue="@string/default_zip"
         android:inputType="text"
         android:key="@string/zip_preference_key"
         android:singleLine="true"
         android:title="@string/zip_code"/>
+
+    <!--Units chooser-->
+    <ListPreference
+        android:defaultValue="1"
+        android:entries="@array/units"
+        android:entryValues="@array/units_values"
+        android:key="@string/unit_key"
+        android:title="@string/units"/>
+
 
 </PreferenceScreen>

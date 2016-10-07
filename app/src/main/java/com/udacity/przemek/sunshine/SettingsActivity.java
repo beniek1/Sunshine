@@ -26,6 +26,7 @@ public class SettingsActivity extends PreferenceActivity
 
         //Allows showing what value is already chosen for this preference.
         bindPreferenceSummaryToValue(findPreference(getString(R.string.zip_preference_key)));
+        bindPreferenceSummaryToValue(findPreference(getString(R.string.unit_key)));
     }
 
     /**
