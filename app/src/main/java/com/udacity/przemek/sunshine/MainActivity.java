@@ -23,9 +23,6 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -39,22 +36,16 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        String[] data = {""};
-        List<String> weekForecast = new ArrayList<String>(Arrays.asList(data));
-
         forecastAdapter =
                 new ArrayAdapter<String>(
                         this, // The current context (this activity)
                         R.layout.list_item_forecast, // The name of the layout ID.
-                        R.id.list_item_forecast_textview, // The ID of the textview to populate.
-                        weekForecast);
+                        R.id.list_item_forecast_textview);
 
         ListView listView = (ListView) findViewById(R.id.listview_forecast);
         listView.setAdapter(forecastAdapter);
-        //Initial data retrival.
-        if (forecastAdapter.getCount() == 1) {
-            callFetchWeatherTask();
-        }
+
+        callFetchWeatherTask();
 
         listView.setOnItemClickListener(new ListViewOnItemClickListener());
 
@@ -91,8 +82,6 @@ public class MainActivity extends AppCompatActivity {
      * Retrieves data using Async Task in the background, and updates UI.
      */
     private void callFetchWeatherTask() {
-        Toast.makeText(this, "STARTING WORK!", Toast.LENGTH_SHORT).show();
-        String zipCode = getZipCodeFromPreferences();
         new FetchWeatherTask().execute(getZipCodeFromPreferences());
 
     }
