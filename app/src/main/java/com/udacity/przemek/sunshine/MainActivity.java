@@ -1,5 +1,6 @@
 package com.udacity.przemek.sunshine;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -7,6 +8,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -34,20 +37,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        String[] data = {
-                "Mon 6/23 - Sunny - 31/17",
-                "Tue 6/24 - Foggy - 21/8",
-                "Wed 6/25 - Cloudy - 22/17",
-                "Thurs 6/26 - Rainy - 18/11",
-                "Fri 6/27 - Foggy - 21/10",
-                "Sat 6/28 - TRAPPED IN WEATHERSTATION - 23/18",
-                "Sun 6/29 - Sunny - 20/7"
-        };
+        String[] data = {""};
         List<String> weekForecast = new ArrayList<String>(Arrays.asList(data));
 
-        // Now that we have some dummy forecast data, create an ArrayAdapter.
-        // The ArrayAdapter will take data from a source (like our dummy forecast) and
-        // use it to populate the ListView it's attached to.
         forecastAdapter =
                 new ArrayAdapter<String>(
                         this, // The current context (this activity)
@@ -55,9 +47,11 @@ public class MainActivity extends AppCompatActivity {
                         R.id.list_item_forecast_textview, // The ID of the textview to populate.
                         weekForecast);
 
-        // Get a reference to the ListView, and attach this adapter to it.
         ListView listView = (ListView) findViewById(R.id.listview_forecast);
         listView.setAdapter(forecastAdapter);
+        //Initial update.
+        callFetchWeatherTask();
+        listView.setOnItemClickListener(new ListViewOnItemClickListener());
 
     }
 
@@ -73,8 +67,18 @@ public class MainActivity extends AppCompatActivity {
         if (item.getItemId() == R.id.action_refresh) {
             Toast.makeText(this, "Refresh called!", Toast.LENGTH_SHORT).show();
             callFetchWeatherTask();
+        } else if (item.getItemId() == R.id.settings) {
+            startSettingActivity();
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * Starts setting activity.
+     */
+    private void startSettingActivity() {
+        Intent intent = new Intent(this, SettingsActivity.class);
+        startActivity(intent);
     }
 
     /**
@@ -199,6 +203,22 @@ public class MainActivity extends AppCompatActivity {
                 forecastAdapter.clear();
                 forecastAdapter.addAll(result);
             }
+        }
+    }
+
+    /**
+     * Handles click on single day row.
+     */
+    private class ListViewOnItemClickListener implements AdapterView.OnItemClickListener {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+            String weather = forecastAdapter.getItem(position);
+
+            Intent launchDetailActivity = new Intent(MainActivity.this, DetailsActivity.class);
+            launchDetailActivity.putExtra(DetailsActivity.WEATHER_INFO, weather);
+            startActivity(launchDetailActivity);
+
         }
     }
 }
