@@ -101,8 +101,7 @@ public class MainActivity extends AppCompatActivity {
      */
     private boolean useMetricUnits() {
         String pref = PreferenceManager.getDefaultSharedPreferences(MainActivity.this).getString(getString
-                (R.string
-                        .unit_key), getString(R.string.metric));
+                (R.string.unit_key), getString(R.string.metric));
         if (pref.equals("1")) {
             return true;
         } else {
