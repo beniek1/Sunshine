@@ -1,7 +1,6 @@
 package com.udacity.przemek.sunshine;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -14,6 +13,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -25,9 +25,17 @@ import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
 
+    /**
+     * Default zip code in preferences.
+     */
     public static final String DEFAULT_ZIP_CODE = "52-129";
     public static final String DAYS_PARAM = "7";
     public static final int DAYS = Integer.parseInt(DAYS_PARAM);
+
+    /**
+     * Log tag for logging.
+     */
+    private static final String LOG_TAG = MainActivity.class.getSimpleName();
     public ArrayAdapter<String> forecastAdapter;
 
     @Override
@@ -62,13 +70,44 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.action_refresh) {
-            callFetchWeatherTask();
-        } else if (item.getItemId() == R.id.settings) {
-            startSettingActivity();
-            return true;
+
+        switch (item.getItemId()) {
+            case R.id.action_refresh:
+                callFetchWeatherTask();
+                return true;
+            case R.id.settings:
+                startSettingActivity();
+                return true;
+            case R.id.show_location:
+                showLocationOnMap();
+                return true;
         }
+
         return super.onOptionsItemSelected(item);
+
+    }
+
+    /**
+     * Shows user's preferred location on Map using intent.
+     */
+    private void showLocationOnMap() {
+        String zipCode = getZipCodeFromPreferences();
+        Uri preferredLocUri = Uri.parse("geo:0,0").buildUpon()
+                .appendQueryParameter("q", zipCode)
+                .build();
+        Intent mapIntent = new Intent(Intent.ACTION_VIEW, preferredLocUri);
+
+        //Verify if app capable of handling the intent is present
+        if (mapIntent.resolveActivity(getPackageManager()) != null) {
+            startActivity(mapIntent);
+        } else {
+            //Inform user
+            Log.d(LOG_TAG, String.format("Location: %s .No map application installed on the device",
+                    zipCode));
+            Toast.makeText(this, "No map application installed on your device", Toast.LENGTH_LONG).show();
+        }
+
+
     }
 
     /**
@@ -91,9 +130,8 @@ public class MainActivity extends AppCompatActivity {
      * Retrieves zip code saved in preferences.
      */
     private String getZipCodeFromPreferences() {
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        return sharedPreferences.getString(getString(R.string.zip_preference_key),
-                DEFAULT_ZIP_CODE);
+        return PreferenceManager.getDefaultSharedPreferences(this).getString(getString(R.string
+                .zip_preference_key), DEFAULT_ZIP_CODE);
     }
 
     /**
