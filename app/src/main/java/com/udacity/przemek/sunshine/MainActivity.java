@@ -81,9 +81,9 @@ public class MainActivity extends AppCompatActivity {
             case R.id.show_location:
                 showLocationOnMap();
                 return true;
+            default:
+                return false;
         }
-
-        return super.onOptionsItemSelected(item);
 
     }
 
