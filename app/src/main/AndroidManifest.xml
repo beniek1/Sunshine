@@ -19,7 +19,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".DetailsActivity"
+            android:name=".DayDetailActivity"
             android:label="@string/title_activity_day_detail"
             android:theme="@style/AppTheme">
             <meta-data

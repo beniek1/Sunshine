@@ -156,8 +156,8 @@ public class MainActivity extends AppCompatActivity {
 
             String weather = forecastAdapter.getItem(position);
 
-            Intent launchDetailActivity = new Intent(MainActivity.this, DetailsActivity.class);
-            launchDetailActivity.putExtra(DetailsActivity.WEATHER_INFO, weather);
+            Intent launchDetailActivity = new Intent(MainActivity.this, DayDetailActivity.class);
+            launchDetailActivity.putExtra(DayDetailActivity.WEATHER_INFO, weather);
             startActivity(launchDetailActivity);
 
         }

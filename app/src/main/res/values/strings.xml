@@ -14,6 +14,7 @@
     <string name="unit_key">unit_key</string>
     <string name="metric">Metric</string>
     <string name="show_location">Show location</string>
+    <string name="share">Share</string>
 
     <!--Array for preference screen with units-->
     <string-array name="units">
