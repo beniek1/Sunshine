@@ -37,7 +37,7 @@ public class WeatherJsonParser {
         if (forecastJsonStr == null) {
             String msg = "Empty JSON string received!";
             Log.e(LOG_TAG, msg);
-            throw new Exception(msg);
+            throw new IllegalArgumentException(msg);
         }
 
         // These are the names of the JSON objects that need to be extracted.
